@@ -30,7 +30,7 @@ struct writer_type_traits<char*>
 	static const bool static_count = true;
 	static const size_t count = 1;
 
-	inline static bool write(stream& output, char* str)
+	inline static bool write(stream& output, const char* str)
 	{
 		return detail::write_bulk_element(output, const_buffer_view(str, strlen(str)));
 	}
@@ -70,7 +70,7 @@ struct writer_type_traits<wchar_t*>
 	static const bool static_count = true;
 	static const size_t count = 1;
 
-	inline static bool write(stream& output, wchar_t* str)
+	inline static bool write(stream& output, const wchar_t* str)
 	{
 		return writer_type_traits<const wchar_t*>::write(output, str);
 	}
@@ -107,7 +107,7 @@ struct writer_type_traits<buffer_view>
 {
 	static const bool static_count = true;
 	static const size_t count = 1;
-	inline static bool write(stream& output, buffer_view buf)
+	inline static bool write(stream& output, const_buffer_view buf)
 	{
 		return detail::write_bulk_element(output, const_buffer_view(buf));
 	}

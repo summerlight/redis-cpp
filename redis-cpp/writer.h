@@ -16,6 +16,9 @@ namespace redis
 using std::begin;
 using std::end;
 
+template<typename T, typename enable = void>
+struct writer_type_traits;
+
 namespace detail
 {
 
@@ -76,6 +79,33 @@ inline bool write_bulk_element(stream& output, const_buffer_view buf)
 		write_newline(output);
 }
 
+// writer wrapper functions
+template<typename T>
+inline typename std::enable_if<
+	writer_type_traits<typename std::decay<T>::type>::static_count,
+	size_t
+>::type
+count_element(const T& value)
+{
+	return writer_type_traits<typename std::decay<T>::type>::count;
+}
+
+template<typename T>
+inline typename std::enable_if<
+	!writer_type_traits<typename std::decay<T>::type>::static_count,
+	size_t
+>::type
+count_element(const T& value)
+{
+	return writer_type_traits<typename std::decay<T>::type>::count(value);
+}
+
+template<typename T>
+bool write_element(stream& output, const T& value)
+{
+	return writer_type_traits<typename std::decay<T>::type>::write(output, value);
+}
+
 } // the end of namespace "redis::detail"
 
 // header for request
@@ -85,9 +115,6 @@ inline bool write_header(stream& output, size_t size)
 		detail::write_integer(output, size) &&
 		detail::write_newline(output);
 }
-
-template<typename T, typename enable = void>
-struct writer_type_traits;
 
 template<typename T, typename enable = void>
 struct is_single_element_type;
@@ -110,404 +137,40 @@ struct is_single_element_type<
 	const static bool value = false;
 };
 
-// writer wrapper functions
-template<typename T>
-inline typename std::enable_if<
-	writer_type_traits<typename std::decay<T>::type>::static_count,
-	size_t
->::type
-	count_element(T&& value)
-{
-	return writer_type_traits<typename std::decay<T>::type>::count;
-}
-
-template<typename T>
-inline typename std::enable_if<
-	!writer_type_traits<typename std::decay<T>::type>::static_count,
-	size_t
->::type
-	count_element(T&& value)
-{
-	return writer_type_traits<typename std::decay<T>::type>::count(std::forward<T>(value));
-}
-
-template<typename T>
-bool write_element(stream& output, T&& value)
-{
-	return writer_type_traits<typename std::decay<T>::type>::write(output, std::forward<T>(value));
-}
-
 // vs 2010 doesn't support variadic template - using code generator as a workaround
 // begin of auto-generated code
-template <
-	typename T1,
-	typename T2
->
-size_t count_element(T1&& v1, T2&& v2)
+
+inline size_t count_element()
 {
-	return count_element(fwd(1)) + count_element(fwd(2));
+	return 0u;
 }
 
-template <
-	typename T1,
-	typename T2,
-	typename T3
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3)
+template<typename Head, typename... Remainder>
+size_t count_element(const Head& h, const Remainder&... r)
 {
-	return count_element(fwd(1), fwd(2)) + count_element(fwd(3));
+	return detail::count_element(h) +
+		count_element(r...);
 }
 
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3, T4&& v4)
+inline bool write_element(stream& output)
 {
-	return count_element(fwd(1), fwd(2), fwd(3)) + count_element(fwd(4));
+	return true;
 }
 
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5)
+template<typename Head, typename... Remainder>
+bool write_element(stream& output, const Head& h, const Remainder&... r)
 {
-	return count_element(fwd(1), fwd(2), fwd(3), fwd(4)) + count_element(fwd(5));
+	return detail::write_element(output, h) &&
+		write_element(output, r...);
 }
 
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6)
+template<typename... Typelist>
+std::error_code format_command(stream& output, const Typelist&... values)
 {
-	return count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5)) + count_element(fwd(6));
+	return write_header(output, count_element(values...)) &&
+		write_element(output, values...) ? std::error_code() : error::stream_error;
 }
 
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7)
-{
-	return count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6)) + count_element(fwd(7));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8)
-{
-	return count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7)) + count_element(fwd(8));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8,
-	typename T9
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8, T9&& v9)
-{
-	return count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8)) + count_element(fwd(9));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8,
-	typename T9,
-	typename T10
->
-size_t count_element(T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8, T9&& v9, T10&& v10)
-{
-	return count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8), fwd(9)) + count_element(fwd(10));
-}
-
-template <
-	typename T1,
-	typename T2
->
-bool write_element(stream& output, T1&& v1, T2&& v2)
-{
-	return write_element(output, fwd(1)) && write_element(output, fwd(2));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3)
-{
-	return write_element(output, fwd(1), fwd(2)) && write_element(output, fwd(3));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4)
-{
-	return write_element(output, fwd(1), fwd(2), fwd(3)) && write_element(output, fwd(4));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5)
-{
-	return write_element(output, fwd(1), fwd(2), fwd(3), fwd(4)) && write_element(output, fwd(5));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6)
-{
-	return write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5)) && write_element(output, fwd(6));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7)
-{
-	return write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6)) && write_element(output, fwd(7));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8)
-{
-	return write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7)) && write_element(output, fwd(8));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8,
-	typename T9
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8, T9&& v9)
-{
-	return write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8)) && write_element(output, fwd(9));
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8,
-	typename T9,
-	typename T10
->
-bool write_element(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8, T9&& v9, T10&& v10)
-{
-	return write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8), fwd(9)) && write_element(output, fwd(10));
-}
-
-template <
-	typename T1
->
-std::error_code format_command(stream& output, T1&& v1)
-{
-	return write_header(output, count_element(fwd(1))) && 
-		write_element(output, fwd(1)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2)
-{
-	return write_header(output, count_element(fwd(1), fwd(2))) && 
-		write_element(output, fwd(1), fwd(2)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3), fwd(4))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3), fwd(4)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8,
-	typename T9
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8, T9&& v9)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8), fwd(9))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8), fwd(9)) ? std::error_code() : error::stream_error;
-}
-
-template <
-	typename T1,
-	typename T2,
-	typename T3,
-	typename T4,
-	typename T5,
-	typename T6,
-	typename T7,
-	typename T8,
-	typename T9,
-	typename T10
->
-std::error_code format_command(stream& output, T1&& v1, T2&& v2, T3&& v3, T4&& v4, T5&& v5, T6&& v6, T7&& v7, T8&& v8, T9&& v9, T10&& v10)
-{
-	return write_header(output, count_element(fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8), fwd(9), fwd(10))) && 
-		write_element(output, fwd(1), fwd(2), fwd(3), fwd(4), fwd(5), fwd(6), fwd(7), fwd(8), fwd(9), fwd(10)) ? std::error_code() : error::stream_error;
-}
-// end of auto-generated code
 
 namespace detail
 {
