@@ -28,8 +28,8 @@ std::error_condition make_error_condition(error_t e);
 class error_category : public std::error_category
 {
 public:
-	virtual const char* name() const;
-	virtual std::string message(value_type ev) const;
+	virtual const char* name() const noexcept override;
+	virtual std::string message(int ev) const noexcept override;
 };
 
 const std::error_category& category();

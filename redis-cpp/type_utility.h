@@ -5,11 +5,45 @@
 #include <type_traits>
 #include <iterator>
 
-template<int> void begin();
-template<int> void end();
+namespace detail {
 
-template <typename T>
-typename std::add_rvalue_reference<T>::type declval(); // vs2010 does not support std::declval - workaround
+using std::begin;
+using std::end;
+
+struct undefined_begin {};
+struct undefined_end {};
+
+template <typename R> class begin_result {
+	template <typename T> static auto check(T &&t) -> decltype(begin(t));
+	static undefined_begin check(...);
+public:
+	typedef decltype(check(std::declval<R>())) type;
+};
+
+template <typename R> class end_result {
+	template <typename T> static auto check(T &&t) -> decltype(end(t));
+	static undefined_end check(...);
+public:
+	typedef decltype(check(std::declval<R>())) type;
+};
+
+} // namespace detail
+
+template <typename R>
+struct is_range : std::is_same<typename detail::begin_result<R>::type,
+	typename detail::end_result<R>::type> {};
+
+/*
+template<typename T>
+struct is_input_iterator
+{
+	using decay_t = typename std::decay<T>::type;
+	using iterator_category_t = typename std::iterator_traits<decay_t>::iterator_category;
+	static const bool value = std::is_base_of<
+		std::input_iterator_tag,
+		iterator_category_t
+	>::value;
+};
 
 template <bool b>
 struct error_if_false;
@@ -17,15 +51,6 @@ struct error_if_false;
 template <>
 struct error_if_false<true>
 {
-};
-
-template<typename U>
-struct is_input_iterator
-{
-	static const bool value = std::is_base_of<
-		std::input_iterator_tag,
-		typename std::iterator_traits<U>::iterator_category
-	>::value;
 };
 
 template<typename T>
@@ -38,11 +63,11 @@ private:
 	template<typename U>
 	static auto check(U*) -> decltype(
 		error_if_false<
-			is_input_iterator<decltype(begin(declval<U>()))>::value &&
-			is_input_iterator<decltype(end(declval<U>()))>::value &&
+			is_range<decltype(begin(std::declval<U>()))>::value &&
+			is_range<decltype(end(std::declval<U>()))>::value &&
 			std::is_same<
-				decltype(begin(declval<U>())),
-				decltype(end(declval<U>()))
+				decltype(begin(std::declval<U>())),
+				decltype(end(std::declval<U>()))
 			>::value
 		>(),
 		yes()
@@ -54,6 +79,7 @@ private:
 public:
 	static const bool value = (sizeof(check<typename std::decay<T>::type>(nullptr)) == sizeof(yes));
 };
+*/
 
 template<class T>
 struct remove_rvalue_ref {

@@ -157,7 +157,7 @@ struct writer_type_traits<std::pair<T1, T2>>
 template<typename T>
 struct writer_type_traits<
 	T,
-	typename std::enable_if<is_iterable<T>::value>::type
+	typename std::enable_if<is_range<T>::value>::type
 >
 {
 	static const bool static_count = false;

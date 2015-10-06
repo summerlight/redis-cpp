@@ -118,7 +118,7 @@ void write_integer_test(int64_t value)
 	mock_stream output;
 	redis::detail::write_integer(output, value);
 	char buffer[24];
-	sprintf(buffer, "%lld", value);
+	snprintf(buffer, 24, "%lld", value);
 	assert(check_equal(buffer, output));
 }
 

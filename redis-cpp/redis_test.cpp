@@ -4,6 +4,8 @@
 #include <iterator>
 #include <algorithm>
 #include <cstdio>
+#include <cstdint>
+#include <cinttypes>
 
 namespace redis_test
 {
@@ -14,8 +16,8 @@ using std::end;
 const bool check_equal(const char expected[], mock_stream& output)
 {
 	auto expected_size = strlen(expected);
-	return expected_size == output.output_buffer.size() &&
-		std::equal(begin(output.output_buffer), end(output.output_buffer), expected);
+	return std::equal(begin(output.output_buffer), end(output.output_buffer),
+		expected, expected + expected_size);
 }
 
 void serialize(const reply& r, redis::stream& output)
@@ -23,23 +25,23 @@ void serialize(const reply& r, redis::stream& output)
 	char buffer[256];
 	switch (r.t) {
 	case reply::null:
-		sprintf(buffer, "$-1\r\n");
+		snprintf(buffer, sizeof(buffer), "$-1\r\n");
 		break;
 	case reply::status:
-		sprintf(buffer, "+%s\r\n", r.str.c_str());
+		snprintf(buffer, sizeof(buffer), "+%s\r\n", r.str.c_str());
 		break;
 	case reply::error:
-		sprintf(buffer, "-%s\r\n", r.str.c_str());
+		snprintf(buffer, sizeof(buffer), "-%s\r\n", r.str.c_str());
 		break;
 	case reply::integer_type:
-		sprintf(buffer, ":%d\r\n", r.num);
+		snprintf(buffer, sizeof(buffer), ":%" PRId64 "\r\n", r.num);
 		break;
 	case reply::bulk_type:
-		sprintf(buffer, "-%d", r.bulk.size());
+		snprintf(buffer, sizeof(buffer), "-%d", r.bulk.size());
 		// \r\n
 		break;
 	case reply::multi_bulk_type:
-		sprintf(buffer, "*%d", r.multi_bulk.size());
+		snprintf(buffer, sizeof(buffer), "*%d", r.multi_bulk.size());
 		// \r\n
 		for (auto i = begin(r.multi_bulk), e = end(r.multi_bulk); i != e; ++i) {
 			serialize(*i->get(), output);

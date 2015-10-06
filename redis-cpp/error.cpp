@@ -18,12 +18,12 @@ std::error_condition make_error_condition(error_t e)
 
 } // the end of namespace "redis::error"
 
-const char* error_category::name() const
+const char* error_category::name() const noexcept
 {
 	return "redis_error";
 }
 
-std::string error_category::message(value_type ev) const
+std::string error_category::message(int ev) const noexcept
 {
 	switch(ev) {
 	case error::error_reply:
@@ -46,9 +46,7 @@ std::string error_category::message(value_type ev) const
 }
 
 namespace {
-// thread-safe initialization of local static variable is not implemented in msvc right now
-error_category error_category_instance;
-
+thread_local error_category error_category_instance;
 } // the end of anonmymous namespace
 
 const std::error_category& category()

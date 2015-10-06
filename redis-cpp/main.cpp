@@ -1,10 +1,10 @@
 #include <cstdio>
 #include <iostream>
-#include <boost/thread.hpp>
+//#include <boost/thread.hpp>
 
 #include "redis.h"
-#include "asio_adaptor.h"
-
+//#include "asio_adaptor.h"
+/*
 LONG count;
 
 void handle_error(redis::session<asio_stream_adaptor>& sess, std::error_code& err)
@@ -93,7 +93,7 @@ void do_something()
 		t[i].join();
 	}
 }
-
+*/
 namespace redis_test
 {
 	void test_parser();
@@ -106,7 +106,7 @@ int main()
 	redis_test::test_parser();
 	redis_test::test_writer();
 	redis_test::test_command();
-	do_something();
+	//do_something();
 }
 
 /*

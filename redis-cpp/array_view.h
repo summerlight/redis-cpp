@@ -2,6 +2,7 @@
 #define ARRAY_VIEW_H
 
 #include <iterator>
+#include <algorithm>
 #include <exception>
 #include <cassert>
 

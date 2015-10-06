@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <numeric>
 #include <cstdint>
+#include <cinttypes>
 #include <cstddef>
 #include <cassert>
 
@@ -106,31 +107,31 @@ void serialize(const reply* r, mock_stream& input)
 {
 	char buffer[256];
 	if (r == nullptr) {
-		sprintf(buffer, "$-1\r\n");
+		snprintf(buffer, sizeof(buffer), "$-1\r\n");
 		input.more_input(buffer);
 		return;
 	}
 	switch (r->t) {
 	case reply::status:
-		sprintf(buffer, "+%s\r\n", r->str.c_str());
+		snprintf(buffer, sizeof(buffer), "+%s\r\n", r->str.c_str());
 		input.more_input(buffer);
 		break;
 	case reply::error:
-		sprintf(buffer, "-%s\r\n", r->str.c_str());
+		snprintf(buffer, sizeof(buffer), "-%s\r\n", r->str.c_str());
 		input.more_input(buffer);
 		break;
 	case reply::integer_type:
-		sprintf(buffer, ":%d\r\n", r->num);
+		snprintf(buffer, sizeof(buffer), ":%" PRId64 "\r\n", r->num);
 		input.more_input(buffer);
 		break;
 	case reply::bulk_type:
-		sprintf(buffer, "$%d\r\n", r->bulk.size());
+		snprintf(buffer, sizeof(buffer), "$%d\r\n", r->bulk.size());
 		input.more_input(buffer);
 		input.more_input(r->bulk);
 		input.more_input("\r\n");
 		break;
 	case reply::multi_bulk_type:
-		sprintf(buffer, "*%d\r\n", r->multi_bulk.size());
+		snprintf(buffer, sizeof(buffer), "*%d\r\n", r->multi_bulk.size());
 		input.more_input(buffer);
 		for (auto i = begin(r->multi_bulk), e = end(r->multi_bulk); i != e; ++i) {
 			serialize(i->get(), input);
@@ -145,7 +146,7 @@ void check_serialization_result(const char (&expected)[size], const reply* r)
 {
 	mock_stream i;
 	serialize(r, i);
-	assert(i.input_buffer.size() == size && std::equal(begin(i.input_buffer), end(i.input_buffer), begin(expected)));
+	assert(std::equal(begin(i.input_buffer), end(i.input_buffer), begin(expected), end(expected)));
 }
 
 void test_status_reply_serialization()
