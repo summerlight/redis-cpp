@@ -95,7 +95,7 @@ public:
     {
         size_t msg_size = 64; // There's no message reply over 64 byte in redis currently...
 
-        while(true) { // Though we should handle arbitrary sized message
+        for (;;) { // Though we should handle arbitrary sized message
             auto buffer = stream.peek(msg_size);
             if (!buffer.valid()) {
                 err = error::stream_error;

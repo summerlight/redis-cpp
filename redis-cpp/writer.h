@@ -85,7 +85,7 @@ inline typename std::enable_if<
 	writer_type_traits<typename std::decay<T>::type>::static_count,
 	size_t
 >::type
-count_element(const T& value)
+count_element(const T&)
 {
 	return writer_type_traits<typename std::decay<T>::type>::count;
 }
@@ -152,7 +152,7 @@ size_t count_element(const Head& h, const Remainder&... r)
 		count_element(r...);
 }
 
-inline bool write_element(stream& output)
+inline bool write_element(stream&)
 {
 	return true;
 }

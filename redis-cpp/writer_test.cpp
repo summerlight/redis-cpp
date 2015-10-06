@@ -122,26 +122,13 @@ void write_integer_test(int64_t value)
     assert(check_equal(buffer, output));
 }
 
-uint64_t rand64()
-{
-    uint64_t x = rand() & 0xff;
-    x = (x << 8) | (rand() & 0xff);
-    x = (x << 8) | (rand() & 0xff);
-    x = (x << 8) | (rand() & 0xff);
-    x = (x << 8) | (rand() & 0xff);
-    x = (x << 8) | (rand() & 0xff);
-    x = (x << 8) | (rand() & 0xff);
-    x = (x << 8) | (rand() & 0xff);
-    return x;
-}
-
 void writer_helper_function_test()
 {
     for (int i = 0; i < 100; i++) {
-        write_integer_test(static_cast<int64_t>(rand64()));
+        write_integer_test(uniform_random<int64_t>());
     }
-    write_integer_test(INT64_MAX);
-    write_integer_test(INT64_MIN);
+    write_integer_test(std::numeric_limits<int64_t>::max());
+    write_integer_test(std::numeric_limits<int64_t>::min());
     write_integer_test(0);
 
     {

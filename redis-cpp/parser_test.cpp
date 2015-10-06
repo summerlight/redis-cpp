@@ -24,7 +24,7 @@ reply make_status_reply(const char reply_str[])
     reply r;
     r.t = reply::status;
     r.str = reply_str;
-    return std::move(r);
+    return r;
 }
 
 reply make_error_reply(const char reply_str[])
@@ -32,7 +32,7 @@ reply make_error_reply(const char reply_str[])
     reply r;
     r.t = reply::error;
     r.str = reply_str;
-    return std::move(r);
+    return r;
 }
 
 reply make_int_reply(const int32_t num)
@@ -40,7 +40,7 @@ reply make_int_reply(const int32_t num)
     reply r;
     r.t = reply::integer_type;
     r.num = num;
-    return std::move(r);
+    return r;
 }
 
 reply make_bulk_reply(size_t size)
@@ -48,8 +48,8 @@ reply make_bulk_reply(size_t size)
     reply r;
     r.t = reply::bulk_type;
     r.bulk = std::vector<char>(size);
-    std::generate(begin(r.bulk), end(r.bulk), []{ return rand(); });
-    return std::move(r);
+    std::generate(begin(r.bulk), end(r.bulk), []{ return static_cast<char>(uniform_random(0, 0xFF)); });
+    return r;
 }
 
 reply make_bulk_reply(const char str[])
@@ -57,7 +57,7 @@ reply make_bulk_reply(const char str[])
     reply r;
     r.t = reply::bulk_type;
     r.bulk = std::vector<char>(str, str+strlen(str));
-    return std::move(r);
+    return r;
 }
 
 
@@ -75,30 +75,30 @@ reply make_multi_bulk_reply(std::vector<size_t> size_list)
         }
     }
 
-    return std::move(r);
+    return r;
 }
 
 reply make_recursive_reply(size_t depth)
 {
     reply r;
-    auto size = rand() % std::min(std::max(depth, 1u), 5u);
+    auto size = uniform_random<size_t>(1, 5);
 
     r.t = reply::multi_bulk_type;
     r.multi_bulk.reserve(size);
 
     for (size_t i = 0; i < size; i++) {
-        auto random = rand();
-        if (random % 10 > 7 && depth > 0) {
+        auto random = uniform_random(0, 10);
+        if (random > 7 && depth > 0) {
             r.multi_bulk.emplace_back(new reply(make_recursive_reply(depth - 1)));			
-        } else if (random % 10 > 4) {
-            r.multi_bulk.emplace_back(new reply(make_bulk_reply(rand() % 200)));
-        } else if (random % 10 > 1) {
-            r.multi_bulk.emplace_back(new reply(make_int_reply(rand())));
+        } else if (random > 4) {
+            r.multi_bulk.emplace_back(new reply(make_bulk_reply(uniform_random<size_t>(0, 200))));
+        } else if (random > 1) {
+            r.multi_bulk.emplace_back(new reply(make_int_reply(uniform_random<int32_t>())));
         } else {
             r.multi_bulk.emplace_back(nullptr);
         }
     }
-    return std::move(r);
+    return r;
 }
 
 
@@ -325,14 +325,14 @@ void test_integer_reply()
     }
 
     for (int i = 0; i < 1000; i++) {
-        test_reply(make_int_reply(rand() << 15 | rand()));
+        test_reply(make_int_reply(uniform_random<int32_t>()));
     }
 }
 
 void test_bulk_reply()
 {
     for (auto i = 0; i < 1000; i++) {
-        test_reply(make_bulk_reply(rand() % 950 + 50));
+        test_reply(make_bulk_reply(uniform_random(50, 1000)));
     }
 }
 
@@ -348,10 +348,10 @@ void test_nil_reply()
 void test_multi_bulk_reply()
 {
     for (auto i = 0; i < 1000; i++) {
-        std::vector<size_t> data(rand() % 10);
-        std::generate(begin(data), end(data), []()->size_t {
-            const int max_size = 50;
-            auto size = rand() % (max_size+1);
+        std::vector<size_t> data(uniform_random<size_t>(0, 10));
+        std::generate(begin(data), end(data), [] {
+            const size_t max_size = 50;
+            auto size = uniform_random<size_t>(0, max_size + 1);
             return size == max_size ? size_t(-1) : size;
         });
 
@@ -362,7 +362,7 @@ void test_multi_bulk_reply()
 void test_recursive_reply()
 {
     for (auto i = 0; i < 1000; i++) {
-        test_reply(make_recursive_reply(rand() % 10));
+        test_reply(make_recursive_reply(uniform_random<size_t>(0, 10)));
     }
 }
 
@@ -372,7 +372,7 @@ void test_handler_error()
     {
         handler_error() : bulk_count(0) {}
 
-        virtual bool on_multi_bulk_begin(size_t count) override
+        virtual bool on_multi_bulk_begin(size_t) override
         {
             return true;
         }

@@ -26,12 +26,12 @@ public:
         return true;
     }
 
-    virtual bool on_integer(int64_t value) override
+    virtual bool on_integer(int64_t) override
     {
         return false;
     }
 
-    virtual bool on_bulk(const_buffer_view data) override
+    virtual bool on_bulk(const_buffer_view) override
     {
         return false;
     }
@@ -41,7 +41,7 @@ public:
         return false;
     }
 
-    virtual bool on_multi_bulk_begin(size_t count) override
+    virtual bool on_multi_bulk_begin(size_t) override
     {
         return false;
     }

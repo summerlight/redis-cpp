@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <algorithm>
+#include <random>
 #include <cstdint>
 #include <cassert>
 
@@ -54,7 +55,7 @@ struct reply
 
 struct reply_builder : public redis::reply_handler
 {
-    reply_builder() : depth(-1)
+    reply_builder() : depth(static_cast<size_t>(-1))
     {
     }
     virtual ~reply_builder() {}
@@ -247,6 +248,28 @@ inline bool operator!= (const reply& lhs, const reply& rhs)
 
 void serialize(const reply& r, redis::stream& output);
 const bool check_equal(const char expected[], mock_stream& output);
+
+namespace {
+    // initialize random seed with some magic number
+    // I don't like those kinds of global vars, but this is just for test codes
+    thread_local std::default_random_engine gen{ 1111111 };
+}
+
+template<typename IntType = int32_t>
+IntType uniform_random(IntType low, IntType high)
+{
+    using dist_type = std::uniform_int_distribution<IntType>;
+    using param_type = dist_type::param_type;
+    dist_type dist;
+    return dist(gen, param_type{ low, high });
+}
+
+template<typename IntType>
+IntType uniform_random()
+{
+    using numeric_type = std::numeric_limits<IntType>;
+    return uniform_random<IntType>(numeric_type::min(), numeric_type::max());
+}
 
 
 } // namespace "redis_test"
