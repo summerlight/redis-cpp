@@ -8,6 +8,9 @@
 #include <utility>
 #include <cassert>
 #include <cstdio>
+#include <cinttypes>
+
+#include <catch.hpp>
 
 namespace redis_test
 {
@@ -15,7 +18,7 @@ using std::begin;
 using std::end;
 
 // element count function test
-void element_count_test()
+TEST_CASE("element_count", "[writer]")
 {
     // scalar type test
     int a = 0;
@@ -23,44 +26,44 @@ void element_count_test()
     std::wstring c = L"test";
     char* d = "";
 
-    assert(redis::count_element(a) == 1);
-    assert(redis::count_element(b) == 1);
-    assert(redis::count_element(c) == 1);
-    assert(redis::count_element(d) == 1);
-    assert(redis::count_element(0) == 1);
-    assert(redis::count_element(std::string("")) == 1);
-    assert(redis::count_element(std::wstring(L"")) == 1);
-    assert(redis::count_element("") == 1);
+    REQUIRE(redis::count_element(a) == 1);
+    REQUIRE(redis::count_element(b) == 1);
+    REQUIRE(redis::count_element(c) == 1);
+    REQUIRE(redis::count_element(d) == 1);
+    REQUIRE(redis::count_element(0) == 1);
+    REQUIRE(redis::count_element(std::string("")) == 1);
+    REQUIRE(redis::count_element(std::wstring(L"")) == 1);
+    REQUIRE(redis::count_element("") == 1);
 
     // pair type test
     std::pair<int, std::wstring> e;
-    assert(redis::count_element(e) == 2);
-    assert(redis::count_element(std::make_pair(0, "")) == 2);
+    REQUIRE(redis::count_element(e) == 2);
+    REQUIRE(redis::count_element(std::make_pair(0, "")) == 2);
 
     // optional type test
-    assert(redis::count_element(redis::optional(true, a, "test", std::make_pair(10, 10))) == 4);
-    assert(redis::count_element(redis::optional(false, b, "test", std::make_pair(10, 10))) == 0);
-    assert(!b.empty());
+    REQUIRE(redis::count_element(redis::optional(true, a, "test", std::make_pair(10, 10))) == 4);
+    REQUIRE(redis::count_element(redis::optional(false, b, "test", std::make_pair(10, 10))) == 0);
+    REQUIRE(!b.empty());
 
     // variadic argument test
-    assert(redis::count_element(0) == 1);
-    assert(redis::count_element(0, 0) == 2);
-    assert(redis::count_element(0, 0, 0) == 3);
-    assert(redis::count_element(0, 0, 0, 0) == 4);
-    assert(redis::count_element(0, 0, 0, 0, 0) == 5);
-    assert(redis::count_element(0, 0, 0, 0, 0, 0) == 6);
-    assert(redis::count_element(0, 0, 0, 0, 0, 0, 0) == 7);
-    assert(redis::count_element(0, 0, 0, 0, 0, 0, 0, 0) == 8);
-    assert(redis::count_element(0, 0, 0, 0, 0, 0, 0, 0, 0) == 9);
-    assert(redis::count_element(0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == 10);
+    REQUIRE(redis::count_element(0) == 1);
+    REQUIRE(redis::count_element(0, 0) == 2);
+    REQUIRE(redis::count_element(0, 0, 0) == 3);
+    REQUIRE(redis::count_element(0, 0, 0, 0) == 4);
+    REQUIRE(redis::count_element(0, 0, 0, 0, 0) == 5);
+    REQUIRE(redis::count_element(0, 0, 0, 0, 0, 0) == 6);
+    REQUIRE(redis::count_element(0, 0, 0, 0, 0, 0, 0) == 7);
+    REQUIRE(redis::count_element(0, 0, 0, 0, 0, 0, 0, 0) == 8);
+    REQUIRE(redis::count_element(0, 0, 0, 0, 0, 0, 0, 0, 0) == 9);
+    REQUIRE(redis::count_element(0, 0, 0, 0, 0, 0, 0, 0, 0, 0) == 10);
 }
 
-void container_count_test()
+TEST_CASE("container_count", "[writer]")
 {
     {
         // empty
         std::vector<int> vec;
-        assert(redis::count_element(vec) == 0);
+        REQUIRE(redis::count_element(vec) == 0);
     }
 
     {
@@ -69,18 +72,18 @@ void container_count_test()
         vec.push_back(1);
         vec.push_back(2);
         vec.push_back(3);
-        assert(redis::count_element(vec) == 3);
+        REQUIRE(redis::count_element(vec) == 3);
     }
 
     {
         // const l-value
         const std::vector<std::string> vec(3);
-        assert(redis::count_element(vec) == 3);
+        REQUIRE(redis::count_element(vec) == 3);
     }
 
     {
         // r-value
-        assert(redis::count_element(std::vector<std::wstring>(3)) == 3u);
+        REQUIRE(redis::count_element(std::vector<std::wstring>(3)) == 3u);
     }
 
     {
@@ -89,7 +92,7 @@ void container_count_test()
         vec.push_back(std::make_pair(0, "0"));
         vec.push_back(std::make_pair(1, "1"));
         vec.push_back(std::make_pair(2, "2"));
-        assert(redis::count_element(vec) == 6u);
+        REQUIRE(redis::count_element(vec) == 6u);
     }
 
     {
@@ -99,7 +102,7 @@ void container_count_test()
         list.push_back(1);
         list.push_back(2);
         list.push_back(3);
-        assert(redis::count_element(list) == 4u);
+        REQUIRE(redis::count_element(list) == 4u);
     }
 
     {
@@ -107,22 +110,21 @@ void container_count_test()
         std::vector<int> vec;
         vec.push_back(1);
         vec.push_back(2);
-        assert(redis::count_element(redis::optional(true, vec)) == 2);
-        assert(vec.size() == 2); // optional value for l-value should not move container - only for r-value
+        REQUIRE(redis::count_element(redis::optional(true, vec)) == 2);
+        REQUIRE(vec.size() == 2); // optional value for l-value should not move container - only for r-value
     }
 }
-
 
 void write_integer_test(int64_t value)
 {
     mock_stream output;
     redis::detail::write_integer(output, value);
     char buffer[24];
-    snprintf(buffer, 24, "%lld", value);
-    assert(check_equal(buffer, output));
+    snprintf(buffer, 24, "%" PRId64, value);
+    REQUIRE(check_equal(buffer, output));
 }
 
-void writer_helper_function_test()
+TEST_CASE("writer_helper_function", "[writer]")
 {
     for (int i = 0; i < 100; i++) {
         write_integer_test(uniform_random<int64_t>());
@@ -134,20 +136,20 @@ void writer_helper_function_test()
     {
         mock_stream output;
         redis::detail::write_newline(output);
-        assert(check_equal("\r\n", output));
+        REQUIRE(check_equal("\r\n", output));
     }
 
     {
         mock_stream output;
         const char test_data[] = "this is test";
         redis::detail::write_bulk_element(output, redis::const_buffer_view(begin(test_data), end(test_data)-1));
-        assert(check_equal("$12\r\nthis is test\r\n", output));
+        REQUIRE(check_equal("$12\r\nthis is test\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_header(output, 10);
-        assert(check_equal("*10\r\n", output));
+        REQUIRE(check_equal("*10\r\n", output));
     }
 }
 
@@ -156,10 +158,10 @@ void write_element_test(T&& value, const char expected[])
 {
     mock_stream output;
     redis::write_element(output, std::forward<T>(value));
-    assert(check_equal(expected, output));
+    REQUIRE(check_equal(expected, output));
 }
 
-void write_element_test_for_each_type()
+TEST_CASE("write_element_for_each_type", "[writer]")
 {
     write_element_test(10, "$2\r\n10\r\n");
     write_element_test("test", "$4\r\ntest\r\n");
@@ -188,77 +190,67 @@ void write_element_test_for_each_type()
     }
 }
 
-void write_variadic_element_test()
+TEST_CASE("write_variadic_element", "[writer]")
 {
     {
         mock_stream output;
         redis::write_element(output, 0);
-        assert(check_equal("$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n", output));
     }
     
     {
         mock_stream output;
         redis::write_element(output, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0, 0, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0, 0, 0, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 
     {
         mock_stream output;
         redis::write_element(output, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
-        assert(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
+        REQUIRE(check_equal("$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n$1\r\n0\r\n", output));
     }
 }
-
-void test_writer()
-{
-    element_count_test();
-    container_count_test();
-    writer_helper_function_test();
-    write_element_test_for_each_type();
-    write_variadic_element_test();
-}
-
 
 } // namespace "redis_test"

@@ -5,6 +5,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include <catch.hpp>
+
 #include "redis_base.h"
 #include "command.h"
 
@@ -17,18 +19,18 @@ using std::end;
 void check_command_output(const redis::command& cmd, const char expected[])
 {
     mock_stream output;
-    auto ec = cmd.write_command(output);
-    assert(!ec && check_equal(expected, output));
+    REQUIRE(!cmd.write_command(output));
+    REQUIRE(check_equal(expected, output));
 }
-    
-void test_key_command()
+
+TEST_CASE("key_command", "[command]")
 {
     redis::GET cmd;
     cmd.key = "this_is_key";
     check_command_output(cmd, "*2\r\n$3\r\nGET\r\n$11\r\nthis_is_key\r\n");
 }
 
-void test_generic_key_value_command()
+TEST_CASE("generic_key_value_command", "[command]")
 {
     {
         redis::SET<int32_t> cmd;
@@ -68,7 +70,7 @@ void test_generic_key_value_command()
     }
 }
 
-void test_key_value_command()
+TEST_CASE("key_value_command", "[command]")
 {
     redis::EXPIRE cmd;
 
@@ -78,7 +80,7 @@ void test_key_value_command()
     check_command_output(cmd, "*3\r\n$6\r\nEXPIRE\r\n$11\r\nthis_is_key\r\n$4\r\n1000\r\n");
 }
 
-void test_adhoc_command()
+TEST_CASE("adhoc_command", "[command]")
 {
     std::string key = "test";
     std::vector<int> test;
@@ -91,7 +93,7 @@ void test_adhoc_command()
     check_command_output(cmd, "*4\r\n$4\r\nSADD\r\n$4\r\ntest\r\n$1\r\n1\r\n$1\r\n2\r\n");
 }
 
-void test_string_command()
+TEST_CASE("string_command", "[command]")
 {
     // SETEX
     {
@@ -136,7 +138,7 @@ void test_string_command()
     }
 }
 
-void test_hash_command()
+TEST_CASE("hash_command", "[command]")
 {
     // HSET
     {
@@ -171,7 +173,7 @@ void test_hash_command()
     }
 }
 
-void test_list_command()
+TEST_CASE("list_command", "[command]")
 {
     // LINSERT
     {
@@ -229,7 +231,7 @@ void test_list_command()
     }
 }
 
-void test_sorted_set_command()
+TEST_CASE("sorted_set_command", "[command]")
 {
     // ZADD
     {
@@ -349,17 +351,5 @@ void test_pubsub_command()
     // TODO
 }
 
-void test_command()
-{
-    test_key_command();
-    test_generic_key_value_command();
-    test_key_value_command();
-    test_adhoc_command();
-    test_string_command();
-    test_hash_command();
-    test_list_command();
-    test_sorted_set_command();
-    test_pubsub_command();
-}
 
 } // namespace "redis_test"

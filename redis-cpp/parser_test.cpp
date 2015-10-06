@@ -8,6 +8,8 @@
 #include <cstddef>
 #include <cassert>
 
+#include <catch.hpp>
+
 #include "reply.h"
 #include "writer.h"
 #include "redis_test.h"
@@ -146,10 +148,10 @@ void check_serialization_result(const char (&expected)[size], const reply* r)
 {
     mock_stream i;
     serialize(r, i);
-    assert(std::equal(begin(i.input_buffer), end(i.input_buffer), begin(expected), end(expected)));
+    REQUIRE(std::equal(begin(i.input_buffer), end(i.input_buffer), begin(expected), end(expected)));
 }
 
-void test_status_reply_serialization()
+TEST_CASE("status_reply_gen", "[parser_test_gen]")
 {
     // result of EVAL "return {ok='this is status reply'}" 0
     static const char expected[] = {
@@ -162,7 +164,7 @@ void test_status_reply_serialization()
     check_serialization_result(expected, &r);
 }
 
-void test_error_reply_serialization()
+TEST_CASE("error_reply_gen", "[parser_test_gen]")
 {
     // result of EVAL "return {err='this is error reply'}" 0
     static const char expected[] = {
@@ -175,7 +177,7 @@ void test_error_reply_serialization()
     check_serialization_result(expected, &r);
 }
 
-void test_integer_reply_serialization()
+TEST_CASE("integer_reply_gen", "[parser_test_gen]")
 {
     // result of EVAL "return 42" 0
     static const char expected[] = {
@@ -186,7 +188,7 @@ void test_integer_reply_serialization()
     check_serialization_result(expected, &r);
 }
 
-void test_nil_reply_serialization()
+TEST_CASE("nil_reply_gen", "[parser_test_gen]")
 {
     // result of EVAL "return false" 0
     static const char expected[] = {
@@ -195,7 +197,7 @@ void test_nil_reply_serialization()
     check_serialization_result(expected, nullptr);
 }
 
-void test_bulk_reply_serialization()
+TEST_CASE("bulk_reply_gen", "[parser_test_gen]")
 {
     // result of EVAL "return 'this is bulk reply'" 0
     static const char expected[] = {
@@ -208,7 +210,7 @@ void test_bulk_reply_serialization()
     check_serialization_result(expected, &r);
 }
 
-void test_multi_bulk_reply_serialization()
+TEST_CASE("multi_bulk_reply_gen", "[parser_test_gen]")
 {
     // result of EVAL "return {'test', 'multi', 'bulk', 'reply', false}" 0
     static const char expected[] = {
@@ -232,7 +234,7 @@ void test_multi_bulk_reply_serialization()
     check_serialization_result(expected, &r);
 }
 
-void test_recursive_reply_serialzation()
+TEST_CASE("recursive_reply_gen", "[parser_test_gen]")
 {
     // result of EVAL "return {'test', 0, {10, {'recursive reply', ''}, false}}" 0
     static const char expected[] = {
@@ -271,28 +273,16 @@ void test_recursive_reply_serialzation()
     check_serialization_result(expected, &r);
 }
 
-void test_serialize_routine()
-{
-    test_status_reply_serialization();
-    test_error_reply_serialization();
-    test_integer_reply_serialization();
-    test_nil_reply_serialization();
-    test_bulk_reply_serialization();
-    test_multi_bulk_reply_serialization();
-    test_recursive_reply_serialzation();
-}
 
 
 // actual parser testing routine and its helper class
-
-
 void test_reply(reply&& r)
 {
     mock_stream in;
     reply_builder b;
     serialize(&r, in);
-    auto ec = redis::parse(in, b);
-    assert(!ec && r == *(b.root));
+    REQUIRE(!redis::parse(in, b));
+    REQUIRE(r == *(b.root));
 }
 
 void test_error_reply(reply&& r)
@@ -300,11 +290,11 @@ void test_error_reply(reply&& r)
     mock_stream in;
     reply_builder b;
     serialize(&r, in);
-    auto ec = redis::parse(in, b);
-    assert(ec == redis::error::error_reply && r == *(b.root));
+    REQUIRE(redis::parse(in, b) == redis::error::error_reply);
+    REQUIRE(r == *(b.root));
 }
 
-void test_status_reply()
+TEST_CASE("status_reply", "[parser]")
 {
     test_reply(make_status_reply("OK"));
     test_error_reply(make_error_reply("ERR"));
@@ -318,7 +308,7 @@ void test_status_reply()
     test_error_reply(make_error_reply("LOADING Redis is loading the dataset in memory"));
 }
 
-void test_integer_reply()
+TEST_CASE("integer_reply", "[parser]")
 {
     for (int i = 0; i < 1000; i++) {
         test_reply(make_int_reply(i));
@@ -329,23 +319,23 @@ void test_integer_reply()
     }
 }
 
-void test_bulk_reply()
+TEST_CASE("bulk_reply", "[parser]")
 {
     for (auto i = 0; i < 1000; i++) {
         test_reply(make_bulk_reply(uniform_random(50, 1000)));
     }
 }
 
-void test_nil_reply()
+TEST_CASE("nil_reply", "[parser]")
 {
     mock_stream in;
     reply_builder b;
     serialize(nullptr, in); // nil reply
-    auto ec = redis::parse(in, b);
-    assert(!ec && (b.root.get() == nullptr));
+    REQUIRE(!redis::parse(in, b));
+    REQUIRE(b.root.get() == nullptr);
 }
 
-void test_multi_bulk_reply()
+TEST_CASE("multi_bulk_reply", "[parser]")
 {
     for (auto i = 0; i < 1000; i++) {
         std::vector<size_t> data(uniform_random<size_t>(0, 10));
@@ -359,14 +349,14 @@ void test_multi_bulk_reply()
     }
 }
 
-void test_recursive_reply()
+TEST_CASE("recursive_reply", "[parser]")
 {
     for (auto i = 0; i < 1000; i++) {
         test_reply(make_recursive_reply(uniform_random<size_t>(0, 10)));
     }
 }
 
-void test_handler_error()
+TEST_CASE("handler_reply", "[parser]")
 {
     struct handler_error : public redis::reply_handler_base
     {
@@ -394,15 +384,14 @@ void test_handler_error()
         mock_stream in;
         serialize(&r, in);
         auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::handler_error);
+        REQUIRE(ec == redis::error::handler_error);
     }
     
     {
         auto r = make_int_reply(150);
         mock_stream in;
         serialize(&r, in);
-        auto ec = redis::parse(in, handler);
-        assert(!ec);
+        REQUIRE(!redis::parse(in, handler));
     }
 
     {
@@ -414,87 +403,69 @@ void test_handler_error()
         auto r = make_multi_bulk_reply(data);
         mock_stream in;
         serialize(&r, in);
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::handler_error && handler.bulk_count == 4);
+        REQUIRE(redis::parse(in, handler) == redis::error::handler_error);
+        REQUIRE(handler.bulk_count == 4);
     }
 }
 
-void test_ill_formed_reply()
+TEST_CASE("ill_formed_reply", "[parser]")
 {
     {
         mock_stream in;
         in.more_input(":42a\r\n");
         redis::integer_reply handler;
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::ill_formed_reply && handler.result == -1);
+        REQUIRE(redis::parse(in, handler) == redis::error::ill_formed_reply);
+        REQUIRE(handler.result == -1);
     }
 
     {
         mock_stream in;
         in.more_input("a");
         redis::integer_reply handler;
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::ill_formed_reply && handler.result == -1);
+        REQUIRE(redis::parse(in, handler) == redis::error::ill_formed_reply);
+        REQUIRE(handler.result == -1);
     }
 }
 
-void test_unexpected_end_of_reply()
+TEST_CASE("unexpected_end_of_reply", "[parser]")
 {
     {
         mock_stream in;
         in.more_input(":42\r");
         redis::integer_reply handler;
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::stream_error && handler.result == -1);
+        REQUIRE(redis::parse(in, handler) == redis::error::stream_error);
+        REQUIRE(handler.result == -1);
     }
     
     {
         mock_stream in;
         in.more_input(":42\r");
         redis::integer_reply handler;
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::stream_error && handler.result == -1);
+        REQUIRE(redis::parse(in, handler) == redis::error::stream_error);
+        REQUIRE(handler.result == -1);
     }
 
     {
         mock_stream in;
         in.more_input(":");
         redis::integer_reply handler;
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::stream_error && handler.result == -1);
+        REQUIRE(redis::parse(in, handler) == redis::error::stream_error);
+        REQUIRE(handler.result == -1);
     }
 
     {
         mock_stream in;
         in.more_input("$18\r\nthis is bulk r");
         redis::bulk_reply handler;
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::stream_error);
+        REQUIRE(redis::parse(in, handler) == redis::error::stream_error);
     }
 
     {
         mock_stream in;
         in.more_input("*5\r\n$4\r\ntest\r\n$5\r\nmulti\r\n$5\r\nreply\r\n$-1\r\n");
         redis::multi_bulk_reply handler;
-        auto ec = redis::parse(in, handler);
-        assert(ec == redis::error::stream_error);
+        REQUIRE(redis::parse(in, handler) == redis::error::stream_error);
     }
-}
-
-void test_parser()
-{
-    test_serialize_routine();
-
-    test_status_reply();
-    test_integer_reply();
-    test_bulk_reply();
-    test_nil_reply();
-    test_multi_bulk_reply();
-    test_recursive_reply();
-
-    test_handler_error();
-    test_ill_formed_reply();
-    test_unexpected_end_of_reply();
 }
 
 } // namespace "redis_test"
