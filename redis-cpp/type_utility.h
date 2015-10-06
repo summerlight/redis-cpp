@@ -15,17 +15,17 @@ struct undefined_begin {};
 struct undefined_end {};
 
 template <typename R> class begin_result {
-	template <typename T> static auto check(T &&t) -> decltype(begin(t));
-	static undefined_begin check(...);
+    template <typename T> static auto check(T &&t) -> decltype(begin(t));
+    static undefined_begin check(...);
 public:
-	typedef decltype(check(std::declval<R>())) type;
+    typedef decltype(check(std::declval<R>())) type;
 };
 
 template <typename R> class end_result {
-	template <typename T> static auto check(T &&t) -> decltype(end(t));
-	static undefined_end check(...);
+    template <typename T> static auto check(T &&t) -> decltype(end(t));
+    static undefined_end check(...);
 public:
-	typedef decltype(check(std::declval<R>())) type;
+    typedef decltype(check(std::declval<R>())) type;
 };
 
 } // namespace detail
@@ -36,16 +36,16 @@ public:
 // those kinds of hack could be removed later.
 template <typename R>
 struct is_range : std::is_same<typename detail::begin_result<R>::type,
-	typename detail::end_result<R>::type> {};
+    typename detail::end_result<R>::type> {};
 
 
 template<class T>
 struct remove_rvalue_ref {
-	typedef typename std::conditional< 
-		std::is_rvalue_reference<T>::value,
-		typename std::remove_reference<T>::type,
-		T
-	>::type type;
+    typedef typename std::conditional< 
+        std::is_rvalue_reference<T>::value,
+        typename std::remove_reference<T>::type,
+        T
+    >::type type;
 };
 
 #endif // TYPE_UTILITY_H

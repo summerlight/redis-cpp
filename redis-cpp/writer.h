@@ -106,7 +106,7 @@ bool write_element(stream& output, const T& value)
 	return writer_type_traits<typename std::decay<T>::type>::write(output, value);
 }
 
-} // the end of namespace "redis::detail"
+} // namespace "redis::detail"
 
 // header for request
 inline bool write_header(stream& output, size_t size)
@@ -205,7 +205,7 @@ struct opt<T1, T2>
 	typename remove_rvalue_ref<T2>::type v2;
 };
 
-} // the end of namespace "redis::detail"
+} // namespace "redis::detail"
 
 template<typename T1>
 inline detail::opt<T1> optional(bool cond, T1&& v1)
@@ -225,7 +225,7 @@ inline detail::opt<T1, T2, T3> optional(bool cond, T1&& v1, T2&& v2, T3&& v3)
 	return detail::opt<T1, T2, T3>(cond, std::forward<T1>(v1), std::forward<T2>(v2), std::forward<T3>(v3));
 }
 
-} // the end of namespace "redis"
+} // namespace "redis"
 
 #undef fwd
 

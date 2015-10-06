@@ -4,19 +4,19 @@
 template<typename functor>
 struct finalizer
 {
-	finalizer(functor&& func) : func(func) {}
-	~finalizer() {
-		func();
-	}
+    finalizer(functor&& func) : func(func) {}
+    ~finalizer() {
+        func();
+    }
 
 private:
-	functor func;
+    functor func;
 };
 
 template<typename functor>
 finalizer<functor> finally(functor&& func)
 {
-	return finalizer<functor>(std::forward<functor>(func));
+    return finalizer<functor>(std::forward<functor>(func));
 }
 
 #endif
