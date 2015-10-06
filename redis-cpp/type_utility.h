@@ -7,6 +7,7 @@
 
 namespace detail {
 
+// copy and paste from lld core library
 using std::begin;
 using std::end;
 
@@ -29,57 +30,14 @@ public:
 
 } // namespace detail
 
+// This is not a really range check, it just checks whether the type has
+// corresponding begin and end free function and their type is same.
+// Because C++17 will introduce a real range concept supported by concept lite, 
+// those kinds of hack could be removed later.
 template <typename R>
 struct is_range : std::is_same<typename detail::begin_result<R>::type,
 	typename detail::end_result<R>::type> {};
 
-/*
-template<typename T>
-struct is_input_iterator
-{
-	using decay_t = typename std::decay<T>::type;
-	using iterator_category_t = typename std::iterator_traits<decay_t>::iterator_category;
-	static const bool value = std::is_base_of<
-		std::input_iterator_tag,
-		iterator_category_t
-	>::value;
-};
-
-template <bool b>
-struct error_if_false;
-
-template <>
-struct error_if_false<true>
-{
-};
-
-template<typename T>
-struct is_iterable
-{
-private:
-	typedef char yes;
-	typedef char (&no)[2];
-
-	template<typename U>
-	static auto check(U*) -> decltype(
-		error_if_false<
-			is_range<decltype(begin(std::declval<U>()))>::value &&
-			is_range<decltype(end(std::declval<U>()))>::value &&
-			std::is_same<
-				decltype(begin(std::declval<U>())),
-				decltype(end(std::declval<U>()))
-			>::value
-		>(),
-		yes()
-	);
-
-	template<typename>
-	static no check(...);
-
-public:
-	static const bool value = (sizeof(check<typename std::decay<T>::type>(nullptr)) == sizeof(yes));
-};
-*/
 
 template<class T>
 struct remove_rvalue_ref {
