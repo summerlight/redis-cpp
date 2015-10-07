@@ -5,6 +5,11 @@ VisualStudioVersion = 14.0.23107.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "redis-cpp", "redis-cpp\redis-cpp.vcxproj", "{3DF8042D-DDA2-4548-9371-D1CB536C6824}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "redis-cpp-test", "redis-cpp-test\redis-cpp-test.vcxproj", "{D1F3358C-6FE8-4127-B172-348512070A81}"
+	ProjectSection(ProjectDependencies) = postProject
+		{3DF8042D-DDA2-4548-9371-D1CB536C6824} = {3DF8042D-DDA2-4548-9371-D1CB536C6824}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +26,14 @@ Global
 		{3DF8042D-DDA2-4548-9371-D1CB536C6824}.Release|x64.Build.0 = Release|x64
 		{3DF8042D-DDA2-4548-9371-D1CB536C6824}.Release|x86.ActiveCfg = Release|Win32
 		{3DF8042D-DDA2-4548-9371-D1CB536C6824}.Release|x86.Build.0 = Release|Win32
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Debug|x64.ActiveCfg = Debug|x64
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Debug|x64.Build.0 = Debug|x64
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Debug|x86.ActiveCfg = Debug|Win32
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Debug|x86.Build.0 = Debug|Win32
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Release|x64.ActiveCfg = Release|x64
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Release|x64.Build.0 = Release|x64
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Release|x86.ActiveCfg = Release|Win32
+		{D1F3358C-6FE8-4127-B172-348512070A81}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

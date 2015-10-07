@@ -127,13 +127,13 @@ void serialize(const reply* r, mock_stream& input)
         input.more_input(buffer);
         break;
     case reply::bulk_type:
-        snprintf(buffer, sizeof(buffer), "$%d\r\n", r->bulk.size());
+        snprintf(buffer, sizeof(buffer), "$%zu\r\n", r->bulk.size());
         input.more_input(buffer);
         input.more_input(r->bulk);
         input.more_input("\r\n");
         break;
     case reply::multi_bulk_type:
-        snprintf(buffer, sizeof(buffer), "*%d\r\n", r->multi_bulk.size());
+        snprintf(buffer, sizeof(buffer), "*%zu\r\n", r->multi_bulk.size());
         input.more_input(buffer);
         for (auto i = begin(r->multi_bulk), e = end(r->multi_bulk); i != e; ++i) {
             serialize(i->get(), input);

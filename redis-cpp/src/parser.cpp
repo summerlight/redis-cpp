@@ -135,7 +135,7 @@ public:
             return true;
         } else {
             auto buffer = stream.read(static_cast<size_t>(expected_size));
-            if (!buffer.valid() || buffer.size() != expected_size) {
+            if (!buffer.valid() || buffer.size() != static_cast<size_t>(expected_size)) {
                 err = error::stream_error;
                 return false;
             }

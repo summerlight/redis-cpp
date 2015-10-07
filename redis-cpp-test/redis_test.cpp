@@ -37,11 +37,11 @@ void serialize(const reply& r, redis::stream& output)
         snprintf(buffer, sizeof(buffer), ":%" PRId64 "\r\n", r.num);
         break;
     case reply::bulk_type:
-        snprintf(buffer, sizeof(buffer), "-%d", r.bulk.size());
+        snprintf(buffer, sizeof(buffer), "-%zu", r.bulk.size());
         // \r\n
         break;
     case reply::multi_bulk_type:
-        snprintf(buffer, sizeof(buffer), "*%d", r.multi_bulk.size());
+        snprintf(buffer, sizeof(buffer), "*%zu", r.multi_bulk.size());
         // \r\n
         for (auto i = begin(r.multi_bulk), e = end(r.multi_bulk); i != e; ++i) {
             serialize(*i->get(), output);
