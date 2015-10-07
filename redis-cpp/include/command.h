@@ -156,7 +156,7 @@ struct cmd_name : public single_key_command\
 template<typename T>\
 struct cmd_name : public single_key_command\
 {\
-    static_assert(is_single_element_type<T>::value, "T should be possible to be represented in single string.");\
+    static_assert(is_single_element_type<T>::value, "T should be represented in a single string.");\
     cmd_name() : value_name(T()) {}\
     virtual std::error_code write_command(stream& output) const override\
     {\
@@ -191,7 +191,7 @@ DECLARE_GENERIC_KEY_SINGLE_VALUE_CMD(SETNX, value, boolean_reply);
 template<typename T>
 struct SETEX : public single_key_command
 {
-    static_assert(is_single_element_type<T>::value, "T should be possible to be represented in single string.");
+    static_assert(is_single_element_type<T>::value, "T should be represented in a single string.");
     
     SETEX() : time_to_live(0), value(T()) {}
 
@@ -208,7 +208,7 @@ struct SETEX : public single_key_command
 template<typename T>
 struct PSETEX : public single_key_command
 {
-    static_assert(is_single_element_type<T>::value, "T should be possible to be represented in single string.");
+    static_assert(is_single_element_type<T>::value, "T should be represented in a single string.");
     
     PSETEX() : time_to_live_ms(0), value(T()) {}
 
@@ -239,7 +239,7 @@ struct GETRANGE : public single_key_command
 template<typename T>
 struct SETRANGE : public single_key_command
 {
-    static_assert(is_single_element_type<T>::value, "T should be possible to be represented in single string.");
+    static_assert(is_single_element_type<T>::value, "T should be represented in a single string.");
     
     SETRANGE() : offset(0), value(T()) {}
 
@@ -267,8 +267,8 @@ DECLARE_KEY_VALUE_CMD(HMGET, std::vector<std::string>, fields, multi_bulk_reply)
 template<typename key_type, typename value_type>
 struct HSET : public single_key_command
 {
-    static_assert(is_single_element_type<key_type>::value, "key_type should be possible to be represented in single string.");
-    static_assert(is_single_element_type<value_type>::value, "value_type should be possible to be represented in single string.");
+    static_assert(is_single_element_type<key_type>::value, "key_type should be represented in a single string.");
+    static_assert(is_single_element_type<value_type>::value, "value_type should be represented in a single string.");
 
     HSET() : field(key_type()), value(value_type()) {}
 
@@ -285,8 +285,8 @@ struct HSET : public single_key_command
 template<typename key_type, typename value_type>
 struct HSETNX : public single_key_command
 {
-    static_assert(is_single_element_type<key_type>::value, "key_type should be possible to be represented in single string.");
-    static_assert(is_single_element_type<value_type>::value, "value_type should be possible to be represented in single string.");
+    static_assert(is_single_element_type<key_type>::value, "key_type should be represented in a single string.");
+    static_assert(is_single_element_type<value_type>::value, "value_type should be represented in a single string.");
 
     HSETNX() : field(key_type()), value(value_type()) {}
 
@@ -303,8 +303,8 @@ struct HSETNX : public single_key_command
 template<typename key_type, typename value_type>
 struct HMSET : public single_key_command
 {
-    static_assert(is_single_element_type<key_type>::value, "key_type should be possible to be represented in single string.");
-    static_assert(is_single_element_type<value_type>::value, "value_type should be possible to be represented in single string.");
+    static_assert(is_single_element_type<key_type>::value, "key_type should be represented in a single string.");
+    static_assert(is_single_element_type<value_type>::value, "value_type should be represented in a single string.");
 
     virtual std::error_code write_command(stream& output) const override
     {
@@ -334,8 +334,8 @@ DECLARE_GENERIC_KEY_SINGLE_VALUE_CMD(RPUSHX, values, integer_reply);
 template<typename pivot_type, typename value_type = pivot_type> 
 struct LINSERT : public single_key_command
 {
-    static_assert(is_single_element_type<pivot_type>::value, "pivot_type should be possible to be represented in single string.");
-    static_assert(is_single_element_type<value_type>::value, "value_type should be possible to be represented in single string.");
+    static_assert(is_single_element_type<pivot_type>::value, "pivot_type should be represented in a single string.");
+    static_assert(is_single_element_type<value_type>::value, "value_type should be represented in a single string.");
 
     LINSERT() : before_pivot(false), pivot(pivot_type()), value(value_type()) {}
 
@@ -381,7 +381,7 @@ struct LTRIM : public single_key_command
 template<typename T>
 struct LREM : public single_key_command
 {
-    static_assert(is_single_element_type<T>::value, "T should be possible to be represented in single string.");
+    static_assert(is_single_element_type<T>::value, "T should be represented in a single string.");
 
     LREM() : count(0), value(T()) {}
 
@@ -401,7 +401,7 @@ struct LREM : public single_key_command
 template<typename T>
 struct LSET : public single_key_command
 {
-    static_assert(is_single_element_type<T>::value, "T should be possible to be represented in single string.");
+    static_assert(is_single_element_type<T>::value, "T should be represented in a single string.");
 
     LSET() : index(0), value(T()) {}
 
@@ -487,7 +487,7 @@ DECLARE_GENERIC_KEY_SINGLE_VALUE_CMD(ZSCORE, member, bulk_reply);
 template<typename score_type, typename member_type>
 struct ZADD : public single_key_command
 {
-    static_assert(std::is_arithmetic<score_type>::value, "Score type of sorted set should be arithmetic type.");
+    static_assert(std::is_arithmetic<score_type>::value, "Score type of sorted set should be an arithmetic type.");
 
     virtual std::error_code write_command(stream& output) const override
     {
@@ -675,7 +675,7 @@ struct SUBSCRIBE : public subscriber_command
 template<typename T>
 struct PUBLISH : public single_key_command
 {
-    static_assert(is_single_element_type<T>::value, "T should be possible to be represented in single string.");
+    static_assert(is_single_element_type<T>::value, "T should be represented in a single string.");
 
     PUBLISH() : message(T()) {}
 
