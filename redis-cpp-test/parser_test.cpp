@@ -20,84 +20,86 @@ namespace redis_test
 using std::begin;
 using std::end;
 
+using reply_ptr = std::unique_ptr<reply>;
+
 // utility functions to help test routine
-reply make_status_reply(const char reply_str[])
+reply_ptr make_status_reply(const char reply_str[])
 {
-    reply r;
-    r.t = reply::status;
-    r.str = reply_str;
+    auto r = std::make_unique<reply>();
+    r->t = reply::status;
+    r->str = reply_str;
     return r;
 }
 
-reply make_error_reply(const char reply_str[])
+reply_ptr make_error_reply(const char reply_str[])
 {
-    reply r;
-    r.t = reply::error;
-    r.str = reply_str;
+    auto r = std::make_unique<reply>();
+    r->t = reply::error;
+    r->str = reply_str;
     return r;
 }
 
-reply make_int_reply(const int32_t num)
+reply_ptr make_int_reply(const int32_t num)
 {
-    reply r;
-    r.t = reply::integer_type;
-    r.num = num;
+    auto r = std::make_unique<reply>();
+    r->t = reply::integer_type;
+    r->num = num;
     return r;
 }
 
-reply make_bulk_reply(size_t size)
+reply_ptr make_bulk_reply(size_t size)
 {
-    reply r;
-    r.t = reply::bulk_type;
-    r.bulk = std::vector<char>(size);
-    std::generate(begin(r.bulk), end(r.bulk), []{ return static_cast<char>(uniform_random(0, 0xFF)); });
+    auto r = std::make_unique<reply>();
+    r->t = reply::bulk_type;
+    r->bulk = std::vector<char>(size);
+    std::generate(begin(r->bulk), end(r->bulk), []{ return static_cast<char>(uniform_random(0, 0xFF)); });
     return r;
 }
 
-reply make_bulk_reply(const char str[])
+reply_ptr make_bulk_reply(const char str[])
 {
-    reply r;
-    r.t = reply::bulk_type;
-    r.bulk = std::vector<char>(str, str+strlen(str));
+    auto r = std::make_unique<reply>();
+    r->t = reply::bulk_type;
+    r->bulk = std::vector<char>(str, str+strlen(str));
     return r;
 }
 
 
-reply make_multi_bulk_reply(std::vector<size_t> size_list)
+reply_ptr make_multi_bulk_reply(std::vector<size_t> size_list)
 {
-    reply r;
-    r.t = reply::multi_bulk_type;
-    r.multi_bulk.reserve(size_list.size());
+    auto r = std::make_unique<reply>();
+    r->t = reply::multi_bulk_type;
+    r->multi_bulk.reserve(size_list.size());
 
     for (auto i = begin(size_list), e = end(size_list); i != e; ++i) {
         if (*i == size_t(-1)) {
-            r.multi_bulk.emplace_back(nullptr);
+            r->multi_bulk.emplace_back(nullptr);
         } else {
-            r.multi_bulk.emplace_back(new reply(make_bulk_reply(*i)));
+            r->multi_bulk.emplace_back(make_bulk_reply(*i));
         }
     }
 
     return r;
 }
 
-reply make_recursive_reply(size_t depth)
+reply_ptr make_recursive_reply(size_t depth)
 {
-    reply r;
+    auto r = std::make_unique<reply>();
     auto size = uniform_random<size_t>(1, 5);
 
-    r.t = reply::multi_bulk_type;
-    r.multi_bulk.reserve(size);
+    r->t = reply::multi_bulk_type;
+    r->multi_bulk.reserve(size);
 
     for (size_t i = 0; i < size; i++) {
         auto random = uniform_random(0, 10);
         if (random > 7 && depth > 0) {
-            r.multi_bulk.emplace_back(new reply(make_recursive_reply(depth - 1)));			
+            r->multi_bulk.emplace_back(make_recursive_reply(depth - 1));			
         } else if (random > 4) {
-            r.multi_bulk.emplace_back(new reply(make_bulk_reply(uniform_random<size_t>(0, 200))));
+            r->multi_bulk.emplace_back(make_bulk_reply(uniform_random<size_t>(0, 200)));
         } else if (random > 1) {
-            r.multi_bulk.emplace_back(new reply(make_int_reply(uniform_random<int32_t>())));
+            r->multi_bulk.emplace_back(make_int_reply(uniform_random<int32_t>()));
         } else {
-            r.multi_bulk.emplace_back(nullptr);
+            r->multi_bulk.emplace_back(nullptr);
         }
     }
     return r;
@@ -161,7 +163,7 @@ TEST_CASE("status_reply_gen", "[parser_test_gen]")
     };
 
     auto r = make_status_reply("this is status reply");
-    check_serialization_result(expected, &r);
+    check_serialization_result(expected, r.get());
 }
 
 TEST_CASE("error_reply_gen", "[parser_test_gen]")
@@ -174,7 +176,7 @@ TEST_CASE("error_reply_gen", "[parser_test_gen]")
     };
 
     auto r = make_error_reply("this is error reply");
-    check_serialization_result(expected, &r);
+    check_serialization_result(expected, r.get());
 }
 
 TEST_CASE("integer_reply_gen", "[parser_test_gen]")
@@ -185,7 +187,7 @@ TEST_CASE("integer_reply_gen", "[parser_test_gen]")
     };
 
     auto r = make_int_reply(42);
-    check_serialization_result(expected, &r);
+    check_serialization_result(expected, r.get());
 }
 
 TEST_CASE("nil_reply_gen", "[parser_test_gen]")
@@ -207,7 +209,7 @@ TEST_CASE("bulk_reply_gen", "[parser_test_gen]")
     };
 
     auto r = make_bulk_reply("this is bulk reply");
-    check_serialization_result(expected, &r);
+    check_serialization_result(expected, r.get());
 }
 
 TEST_CASE("multi_bulk_reply_gen", "[parser_test_gen]")
@@ -222,16 +224,16 @@ TEST_CASE("multi_bulk_reply_gen", "[parser_test_gen]")
         '\n'
     };
 
-    reply r;
-    r.t = reply::multi_bulk_type;
-    r.multi_bulk.reserve(5);
-    r.multi_bulk.emplace_back(new reply(make_bulk_reply("test")));
-    r.multi_bulk.emplace_back(new reply(make_bulk_reply("multi")));
-    r.multi_bulk.emplace_back(new reply(make_bulk_reply("bulk")));
-    r.multi_bulk.emplace_back(new reply(make_bulk_reply("reply")));
-    r.multi_bulk.emplace_back(nullptr);
+    auto r = std::make_unique<reply>();
+    r->t = reply::multi_bulk_type;
+    r->multi_bulk.reserve(5);
+    r->multi_bulk.emplace_back(make_bulk_reply("test"));
+    r->multi_bulk.emplace_back(make_bulk_reply("multi"));
+    r->multi_bulk.emplace_back(make_bulk_reply("bulk"));
+    r->multi_bulk.emplace_back(make_bulk_reply("reply"));
+    r->multi_bulk.emplace_back(nullptr);
 
-    check_serialization_result(expected, &r);
+    check_serialization_result(expected, r.get());
 }
 
 TEST_CASE("recursive_reply_gen", "[parser_test_gen]")
@@ -247,51 +249,51 @@ TEST_CASE("recursive_reply_gen", "[parser_test_gen]")
         '1', '\r', '\n'
     };
 
-    reply r;
-    r.t = reply::multi_bulk_type;
-    r.multi_bulk.reserve(3);
-    r.multi_bulk.emplace_back(new reply(make_bulk_reply("test")));
-    r.multi_bulk.emplace_back(new reply(make_int_reply(0)));
+    auto r = std::make_unique<reply>();
+    r->t = reply::multi_bulk_type;
+    r->multi_bulk.reserve(3);
+    r->multi_bulk.emplace_back(make_bulk_reply("test"));
+    r->multi_bulk.emplace_back(make_int_reply(0));
 
     {
-        reply r1;
-        r1.t = reply::multi_bulk_type;
-        r1.multi_bulk.reserve(3);
-        r1.multi_bulk.emplace_back(new reply(make_int_reply(10)));
+        auto r1 = std::make_unique<reply>();
+        r1->t = reply::multi_bulk_type;
+        r1->multi_bulk.reserve(3);
+        r1->multi_bulk.emplace_back(make_int_reply(10));
         {
-            reply r2;
-            r2.t = reply::multi_bulk_type;
-            r2.multi_bulk.reserve(2);
-            r2.multi_bulk.emplace_back(new reply(make_bulk_reply("recursive reply")));
-            r2.multi_bulk.emplace_back(new reply(make_bulk_reply("")));
-            r1.multi_bulk.emplace_back(new reply(std::move(r2)));
+            auto r2 = std::make_unique<reply>();
+            r2->t = reply::multi_bulk_type;
+            r2->multi_bulk.reserve(2);
+            r2->multi_bulk.emplace_back(make_bulk_reply("recursive reply"));
+            r2->multi_bulk.emplace_back(make_bulk_reply(""));
+            r1->multi_bulk.emplace_back(std::move(r2));
         }
-        r1.multi_bulk.emplace_back(nullptr);
-        r.multi_bulk.emplace_back(new reply(std::move(r1)));
+        r1->multi_bulk.emplace_back(nullptr);
+        r->multi_bulk.emplace_back(std::move(r1));
     }
 
-    check_serialization_result(expected, &r);
+    check_serialization_result(expected, r.get());
 }
 
 
 
 // actual parser testing routine and its helper class
-void test_reply(reply&& r)
+void test_reply(reply_ptr r)
 {
     mock_stream in;
     reply_builder b;
-    serialize(&r, in);
+    serialize(r.get(), in);
     REQUIRE(!redis::parse(in, b));
-    REQUIRE(r == *(b.root));
+    REQUIRE(*r == *(b.root));
 }
 
-void test_error_reply(reply&& r)
+void test_error_reply(reply_ptr r)
 {
     mock_stream in;
     reply_builder b;
-    serialize(&r, in);
+    serialize(r.get(), in);
     REQUIRE(redis::parse(in, b) == redis::error::error_reply);
-    REQUIRE(r == *(b.root));
+    REQUIRE(*r == *(b.root));
 }
 
 TEST_CASE("status_reply", "[parser]")
@@ -382,7 +384,7 @@ TEST_CASE("handler_reply", "[parser]")
     {
         auto r = make_int_reply(50);
         mock_stream in;
-        serialize(&r, in);
+        serialize(r.get(), in);
         auto ec = redis::parse(in, handler);
         REQUIRE(ec == redis::error::handler_error);
     }
@@ -390,7 +392,7 @@ TEST_CASE("handler_reply", "[parser]")
     {
         auto r = make_int_reply(150);
         mock_stream in;
-        serialize(&r, in);
+        serialize(r.get(), in);
         REQUIRE(!redis::parse(in, handler));
     }
 
@@ -402,7 +404,7 @@ TEST_CASE("handler_reply", "[parser]")
 
         auto r = make_multi_bulk_reply(data);
         mock_stream in;
-        serialize(&r, in);
+        serialize(r.get(), in);
         REQUIRE(redis::parse(in, handler) == redis::error::handler_error);
         REQUIRE(handler.bulk_count == 4);
     }

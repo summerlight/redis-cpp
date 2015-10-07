@@ -62,7 +62,7 @@ struct reply_builder : public redis::reply_handler
 
     virtual bool on_status(redis::const_buffer_view data) override
     {
-        std::unique_ptr<reply> r(new reply);
+        auto r = std::make_unique<reply>();
         r->t = reply::status;
         r->str = std::string(begin(data), end(data));
         push(std::move(r));
@@ -71,7 +71,7 @@ struct reply_builder : public redis::reply_handler
 
     virtual bool on_error(redis::const_buffer_view data) override
     {
-        std::unique_ptr<reply> r(new reply);
+        auto r = std::make_unique<reply>();
         r->t = reply::error;
         r->str = std::string(begin(data), end(data));
         push(std::move(r));
@@ -80,7 +80,7 @@ struct reply_builder : public redis::reply_handler
 
     virtual bool on_integer(int64_t value) override
     {
-        std::unique_ptr<reply> r(new reply);
+        auto r = std::make_unique<reply>();
         r->t = reply::integer_type;
         r->num = value;
         push(std::move(r));
@@ -96,7 +96,7 @@ struct reply_builder : public redis::reply_handler
 
     virtual bool on_bulk(redis::const_buffer_view data) override
     {
-        std::unique_ptr<reply> r(new reply);
+        auto r = std::make_unique<reply>();
         r->t = reply::bulk_type;
         r->bulk = std::vector<char>(begin(data), end(data));
         push(std::move(r));
@@ -105,7 +105,7 @@ struct reply_builder : public redis::reply_handler
 
     virtual bool on_multi_bulk_begin(size_t count) override
     {
-        std::unique_ptr<reply> r(new reply);
+        auto r = std::make_unique<reply>();
         r->t = reply::multi_bulk_type;
         r->multi_bulk.reserve(count);
         push(std::move(r));
